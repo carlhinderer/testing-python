@@ -1,0 +1,75 @@
+-------------------------------------------------
+APPENDIX - PACKAGING AND DISTRIBUTION
+-------------------------------------------------
+
+- Creating an Installable Module
+
+    In order to make our module installable with pip, we need a 'setup.py' at the root of our
+      project.
+
+      - some_module_proj/
+          - setup.py
+          - some_module.py
+
+
+      # File some_module.py
+      def some_func():
+          return 42
+
+
+      # File setup.py
+      from setuptools import setup
+      setup(
+          name='some_module',
+          py_modules=['some_module']
+      )
+
+
+      # Now we can install our module
+      $ pip install ./some_module_proj
+
+      # And we can use it
+      >>> from some_module import some_func
+      >>> some_func()
+      42
+
+
+
+- Creating an Installable Package
+
+    Now, let's make the code a package by adding an '__init__.py' in a directory with a package
+      name.
+
+    - some_package_proj/
+        - setup.py
+        - src/
+            - some_package/
+                __init__.py
+                some_module.py
+
+
+    # File some_package_proj/src/some_package/__init__.py
+    from some_package.some_module import *
+
+
+    # Now client code can use any functions without module qualifier
+    >>> import some_package
+    >>> some_package.some_func()
+
+
+    # Update the setup.py file
+    from setuptools import setup, find_packages
+    setup(
+        name='some_package',
+        packages=find_packages(where='src'),
+        package_dir={'': 'src'}
+    )
+
+
+    # Now we can install the package with pip
+    pip install ./some_package_proj/
+
+    # And use it
+    >>> from some_package import some_func
+    >>> some_func()
+    42
