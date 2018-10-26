@@ -13,10 +13,79 @@ CHAPTER 1 - GETTING STARTED
 
     # Run tests
     $ pytest test_one.py
+
+    # Run tests with verbose output
     $ pytest -v test_one.py
 
+    # Run a single test
+    $ pytest -v tasks/test_one.py::test_passing
 
 
-- Installing pytest
 
-    pip install pytest
+- Test Discovery
+
+    The part of pytest execution where it finds tests to run is called 'test discovery.'  To
+      keep tests discoverable by pytest:
+
+      1. Test files should be named 'test_<something>.py' or '<something>_test.py'
+      2. Test methods and functions should be named 'test_<something>'
+      3. Test classes should be named Test<Something>
+
+
+
+- pytest Options
+
+    # --collect-only lists tests that will be run without actually running them
+    $ pytest --collect-only
+
+
+    # -k lets you filter which tests will be run according to an expression
+    $ pytest -k "asdict or defaults"
+
+
+    # -m lets you mark a subset of test functions to be run together
+    # Test file
+    import pytest
+    @pytest.mark.run_these_please
+    def test_member_access():
+        ...
+
+    # Run marked tests
+    $ pytest -m run_these_please
+
+
+    # -x will stop running on the first failed test
+    pytest -x
+
+
+    # --tb=no will turn stack traces from failures off
+    pytest --tb=no
+
+
+    # --maxfail=n will stop running after n failures
+    pytest --maxfail=5
+
+
+    # -s turns off output capture
+    pytest -s
+
+
+    # -lf only runs tests that failed on last run
+    pytest --lf
+
+
+    # -ff runs all the tests, with the tests that failed on the last run first
+    pytest --ff
+
+
+    # -v for verbose, -q for quiet
+    pytest -v
+    pytest -q
+
+
+    # -l displays all local variable values
+    pytest -l
+
+
+    # --durations=0 will display how fast each of your tests run
+    pytest --durations=0
