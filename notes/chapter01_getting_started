@@ -1,0 +1,22 @@
+-------------------------------------------------
+CHAPTER 1 - GETTING STARTED
+-------------------------------------------------
+
+- First Test
+
+    # File test_one.py
+    def test_passing():
+        assert (1, 2, 3) == (1, 2, 3)
+    def test_failing():
+        assett (1, 2, 3) == (3, 2, 1)
+
+
+    # Run tests
+    $ pytest test_one.py
+    $ pytest -v test_one.py
+
+
+
+- Installing pytest
+
+    pip install pytest
