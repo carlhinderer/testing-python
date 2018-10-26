@@ -73,3 +73,103 @@ APPENDIX - PACKAGING AND DISTRIBUTION
     >>> from some_package import some_func
     >>> some_func()
     42
+
+
+
+- Creating a Source Distribution and Wheel
+
+    We want to create '.whl' and '.tar.gz' files.
+
+    First, we need to:
+      1. Add a 'README', 'README.rst', or 'README.txt' file
+      2. Add metadata for 'url'
+      3. Add metadata for 'author' and 'author_email' or 'maintainer' and 'maintainer_email'
+
+    As a good practice, we will also add:
+      4. A version number
+      5. A license
+      6. A change log
+
+
+
+    # some_package_proj_v2/setup.py
+    ​from​ setuptools ​import​ setup, find_packages
+​   
+​    setup(
+​        name=​'some_package'​,
+​        description=​'Demonstrate packaging and distribution'​,
+​        version=​'1.0'​,
+​        author=​'Brian Okken'​,
+​        author_email=​'brian@pythontesting.net'​,
+​        url=​'https://pragprog.com/book/bopytest/python-testing-with-pytest'​,
+​        packages=find_packages(where=​'src'​),
+​        package_dir={​''​: ​'src'​},
+​    )
+
+
+
+    # some_package_proj_v2/LICENSE
+    Copyright (c) 2017 The Pragmatic Programmers, LLC
+​   
+​    All rights reserved.
+​    
+​    Copyrights apply to this source code.
+​    
+​    You may use the source code in your own projects, however the source code
+​    may not be used to create commercial training material, courses, books,
+​    articles, and the like. We make no guarantees that this source code is fit
+​    for any purpose.
+
+
+
+    # some_package_proj_v2/README.rst
+    ====================================================
+​    some_package: Demonstrate packaging and distribution
+​    ====================================================
+​    
+​    ``some_package`` is the Python package to demostrate how easy it is
+​    to create installable, maintainable, shareable packages and distributions.
+​    
+​    It does contain one function, called ``some_func()``.
+​    
+​    .. code-block
+​    
+​       >>> import some_package
+​       >>> some_package.some_func()
+​       42
+​    
+​    
+​    That's it, really. 
+
+
+
+    # some_package_proj_v2/CHANGELOG.rst
+    Changelog
+​    =========
+​    
+​    ------------------------------------------------------
+​    
+​    1.0
+​    ---
+​    
+​    Changes:
+​    ~~~~~~~~
+​    
+​    - Initial version. 
+
+
+
+    # Now, we can create our '.whl' and '.tar.gz' files
+    $ cd some_package_proj_v2
+    $ python setup.py sdist bdist_wheel
+
+    $ ls dist
+    some_package-1.0-py3-none-any.whl some_package-1.0.tar.gz
+
+
+
+
+- Creating a PyPI-Installable Package
+
+    - Need to add a few more metadata in the 'setup.py'
+    - Need to use 'Twine' to push packages to PyPI
