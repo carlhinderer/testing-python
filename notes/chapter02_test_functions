@@ -1,0 +1,57 @@
+-------------------------------------------------
+CHAPTER 2 - TEST FUNCTIONS
+-------------------------------------------------
+
+- This is the file structure for our Tasks project:
+
+    - tasks_proj/
+        - CHANGELOG.rst
+        - LICENSE
+        - MANIFEST.in
+        - README.rst
+        - setup.py
+        - src/
+            - tasks/
+                - __init__.py
+                - api.py
+                - cli.py
+                - config.py
+                - tasksdb_pymongo.py
+                - tasksdb_tinydb.py
+        - tests
+            - conftest.py
+            - pytest.ini
+            - func
+                - __init__.py
+                - test_add.py
+                - ...
+            - unit
+                - __init__.py
+                - test_task.py
+                - ...
+
+
+
+- Uses of files
+
+    - 'src/tasks/__init__.py' file tells Python that the directory is a package.  It also acts as
+        the main interface to the package when someone uses 'import tasks' (it allows a user to 
+        call tasks.add() instead of tasks.api.add()).
+
+    - 'tests/func/__init__.py' and 'tests/unit/__itit__.py' are empty.  They tell pytest to go up one
+        direcotry to look for the root of the test directory and the pytest.ini file.
+
+    - 'pytest.ini' is optional.  It contains project-wide pytest configuration.
+
+    - 'conftest.py' is also optional.  It is used as a 'local plugin' by pytest, and can contain 
+        hook functions and fixtures.
+
+
+
+- Installing a Module For Testing
+
+    - The easiest way to make a module available for testing is to install it with pip.  The -e flag makes 
+        it possible to edit the source code of the module while also working on the tests.
+
+        $ cd tasks_proj
+        $ pip install -e tasks_proj
