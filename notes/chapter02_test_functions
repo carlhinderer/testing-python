@@ -39,7 +39,7 @@ CHAPTER 2 - TEST FUNCTIONS
         call tasks.add() instead of tasks.api.add()).
 
     - 'tests/func/__init__.py' and 'tests/unit/__itit__.py' are empty.  They tell pytest to go up one
-        direcotry to look for the root of the test directory and the pytest.ini file.
+        directory to look for the root of the test directory and the pytest.ini file.
 
     - 'pytest.ini' is optional.  It contains project-wide pytest configuration.
 
@@ -55,3 +55,51 @@ CHAPTER 2 - TEST FUNCTIONS
 
         $ cd tasks_proj
         $ pip install -e tasks_proj
+
+        # Now, we can run tests
+        pytest test_task.py
+
+
+
+- Using 'assert' Statements
+
+    Pytest uses the simple 'assert' statement for everything, in contrast to other libraries that
+      include various assertion helpers.
+
+      pytest                  unittest
+      ----------------------------------
+      assert something        assertTrue(something)
+      assert a == b           assertEqual(a, b)
+      assert a <= b           assertLessEqual(a, b)
+
+
+    The assert statement can be used with any expression.  If the boolean conversion of the 
+      expression evaluates to True, the test passes.  If it evaulates to False, the test fails.
+
+
+
+- Expecting Exceptions
+
+    # The 'raises' statement catches an expected exception
+    import pytest
+
+    def test_add_raises():
+        with pytest.raises(TypeError):
+            tasks.add(task='not a Task object')
+
+
+
+- Marking Test Functions
+
+    # Mark a test with an attribute so it can be run in a subset
+    @pytest.mark.list
+    @pytest.mark.smoke
+    def test list_raises():
+        """list() should raise an exception with wrong type param."""
+        with pytest.raises(TypeError):
+            tasks.list_tasks(owner=123)
+
+
+    $ pytest -v -m 'smoke' test_api_exceptions.py
+    $ pytest -v -m 'smoke and list' test_api_exceptions.py
+    $ pytest -v -m 'somke and not list' test_api_exceptions.py
