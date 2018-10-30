@@ -103,3 +103,96 @@ CHAPTER 2 - TEST FUNCTIONS
     $ pytest -v -m 'smoke' test_api_exceptions.py
     $ pytest -v -m 'smoke and list' test_api_exceptions.py
     $ pytest -v -m 'somke and not list' test_api_exceptions.py
+
+
+
+- Creating Fixtures
+
+    # Define a fixture that will run before and after every test in this file
+    @pytest.fixture(autouse=True)
+    def initialized_tasks_db(tmpdir):
+        # Setup: start db
+        tasks.start_tasks_db(str(tempdir), 'tiny')
+
+        yield
+
+        # Teardown: stop db
+        tasks.stop_tasks_db()
+
+
+
+- Skipping Tests
+
+    # Skip a test
+    @pytest.mark.skip(reason='misunderstood the api')
+    def test_unique_id_1():
+        ...
+
+
+    # Conditionally skip a test
+    @pytest.mark.skipif(tasks.__version__ < '0.2.0',
+                        reason='not supported until version 0.2.0')
+    def test_unique_id_2():
+        ...
+
+
+
+- Expecting Failed Tests
+
+    # Mark a test as expected to fail
+    @pytest.mark.xfail(tasks.__version__ < '0.2.0',
+                       reason='not supported until version 0.2.0')
+    def test_unique_id_1():
+        ...
+
+
+    @pytest.xfail()
+    def test_unique_id_2():
+        ...
+
+
+    $ pytest test_unique_ids.py
+    ========== 1 passed, 2 xfailed, 1 xpassed in 0.07 seconds
+
+    'xfailed' means a test that was expected to fail
+    'xpassed' means a test that was expceted to fail, but passed
+
+
+
+- Parameterized Testing
+
+    # Run the same task with a few different inputs
+    @pytest.mark.parameterize('task',
+                              [Task('sleep', done=True),
+                               Task('wake', 'brian'),
+                               Task('breathe', 'BRIAN', True),
+                               Task['exercise', 'BrIaN', False]])
+    def test_add(task):
+        task_id = tasks.add(task)
+        t_from_db = tasks.get(task_id)
+        assert equivalent(t_from_db, task)
+
+
+    $ pytest test_add.py::test_add
+    test_add.py::test_add[task0] PASSED
+    test_add.py::test_add[task1] PASSED
+    test_add.py::test_add[task2] PASSED
+    test_add.py::test_add[task3] PASSED
+    =================== 4 passed in 0.05 seconds
+
+
+    # Note that the 'equivalent()' statement checks to see if 2 objects have the all the same 
+    #   values, except for 'id'.
+
+
+    # 'parameterize' with multiple parameters
+    @pytest.mark.parameterize('summary, owner, done',
+                              [(​'sleep'​, None, False),
+                               (​'wake'​, ​'brian'​, False),
+                               (​'breathe'​, ​'BRIAN'​, True),
+                               (​'eat eggs'​, ​'BrIaN'​, False)])
+    def test_add(summary, owner, done):
+        task = Task(summary, owner, done)
+        task_id = tasks.add(task)
+        t_from_db = tasks.get(task_id)
+        assert equivalent(t_from_db, task)
