@@ -1,11 +1,18 @@
 import pytest
 import tasks
+from tasks import Task
 
 
 def test_add_raises():
     """add() should raise an exception with wrong type param."""
     with pytest.raises(TypeError):
-        tasks.add(task='not a task object')
+        tasks.add('not a task object')
+    with pytest.raises(ValueError):
+        tasks.add(Task(2))
+    with pytest.raises(ValueError):
+        tasks.add(Task('owner not a string', owner=2))
+    with pytest.raises(ValueError):
+        tasks.add(Task('id not None', id=1))
 
 
 def test_start_tasks_db_raises():
