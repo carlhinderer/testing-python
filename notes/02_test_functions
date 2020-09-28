@@ -53,7 +53,7 @@
     - The easiest way to make a module available for testing is to install it with pip.  The -e flag makes 
         it possible to edit the source code of the module while also working on the tests.
 
-        $ cd tasks_proj
+        $ cd tasks_proj/..
         $ pip install -e tasks_proj
 
         # Now, we can run tests

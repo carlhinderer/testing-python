@@ -1,4 +1,5 @@
 attrs==20.2.0
+click==7.1.2
 importlib-metadata==2.0.0
 iniconfig==1.0.1
 packaging==20.4
@@ -7,5 +8,7 @@ py==1.9.0
 pyparsing==2.4.7
 pytest==6.1.0
 six==1.15.0
+-e git+https://github.com/carlhinderer/testing-python.git@90408b24ab8edbc11eab703783e59307534702e9#egg=tasks&subdirectory=tasks_proj
+tinydb==4.1.1
 toml==0.10.1
 zipp==3.2.0
