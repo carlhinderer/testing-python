@@ -3,6 +3,7 @@ import tasks
 from tasks import Task
 
 
+@pytest.mark.xfail()
 def test_add_returns_valid_id():
     # GIVEN an initialized tasks db
     # WHEN a new task is added
@@ -12,6 +13,7 @@ def test_add_returns_valid_id():
     assert isinstance(task_id, int)
 
 
+@pytest.mark.xfail()
 @pytest.mark.smoke
 def test_added_task_has_id_set():
     # GIVEN an initialized tasks db
