@@ -2,4 +2,22 @@
 | CHAPTER 4 - BUILTIN FIXTURES                             |
 ------------------------------------------------------------
 
-- 
+- Using 'tmpdir' and 'tmpdir_factory'
+
+
+- Using 'pytestconfig'
+
+
+- Using 'cache'
+
+
+- Using 'capsys'
+
+
+- Using 'monkeypatch'
+
+
+- Using 'doctest_namespace'
+
+
+- Using 'recwarn'

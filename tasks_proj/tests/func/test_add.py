@@ -4,7 +4,7 @@ from tasks import Task
 
 
 @pytest.mark.xfail()
-def test_add_returns_valid_id():
+def test_add_returns_valid_id(tasks_db):
     # GIVEN an initialized tasks db
     # WHEN a new task is added
     # THEN returned task_id is of type int

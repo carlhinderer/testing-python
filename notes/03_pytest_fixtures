@@ -2,4 +2,80 @@
 | CHAPTER 3 - PYTEST FIXTURES                              |
 ------------------------------------------------------------
 
-- 
+- Pytest Fixtures
+
+    - Fixtures run before and after test functions.  
+
+        import pytest
+    
+        @pytest.fixture()
+        def some_data():
+            return 42
+    
+        def test_some_data(some_data):
+            assert some_data == 42
+
+ 
+    - Pytest looks for the fixture name ('some_data' passed in as a parameter) in 
+        the current module, and if it doesn't find it, will also try to look in 
+        'conftest.py'.
+
+      For our project, we'll put all of our fixtures in 'conftest.py' so that we 
+        can share them across multiple test files.  Since conftest is implemented 
+        as a pytest plugin, it does not need to be directly imported in our files.
+
+
+
+- Using Fixtures for Setup and Teardown
+
+    - Most of our tests assume that the Tasks database is already set up and 
+        running.  We take care of this with the 'start_tasks_db' and 
+        'stop_tasks_db' tasks.
+
+
+    - The 'tmpdir' fixture gives us a temporary directory for testing that will
+        automatically be cleaned up afterwards.
+
+
+    - A fixture function runs before the tests that use it.  However, if there is
+        a 'yield' in the function, it stops there, passes control to the tests,
+        and picks up after all the tests are done.
+
+      We'll add the fixture to set up and tear down the test db.
+
+        # tasks_proj/tests/conftest.py
+        --------------------------------------
+        import pytest
+        import tasks
+        from tasks import Task
+
+        @pytest.fixture()
+        def tasks_db(tmpdir):
+            tasks.start_tasks_db(str(tmpdir), 'tiny')
+            yield
+            tasks.stop_tasks_db()
+
+
+
+- Tracing Execution with -setup-show
+
+
+- Using Fixtures for Test Data
+
+
+- Using Multiple Fixtures
+
+
+- Specifying Fixture Scope
+
+
+- Specifying Fixtures with 'usefixtures'
+
+
+- Using 'autouse' for Fixtures That Always Get Used
+
+
+- Renaming Fixtures
+
+
+- Parametrizing Fixtures
