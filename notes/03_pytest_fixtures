@@ -87,10 +87,26 @@
 
 - Using Fixtures for Test Data
 
-    - Fixtures are a good place to set up test data.
+    - Fixtures are a good place to set up test data.  You can return anything.
+
+        @pytest.fixture()
+        def a_tuple():
+            return (1, 'foo', None, {'bar': 23})
+
+        def test_a_tuple(a_tuple):
+            assert a_tuple[3]['bar'] == 23
+
+
+    - Here are some tasks we will use as test data.
 
         # tasks_proj/tests/conftest.py
         ------------------------------------------
+        # Reminder of Task constructor interface
+        # Task(summary=None, owner=None, done=False, id=None)
+        # summary is required
+        # owner and done are optional
+        # id is set by database
+
         @pytest.fixture()
         def tasks_just_a_few():
             return (
@@ -117,6 +133,11 @@
 
 - Using Multiple Fixtures
 
+    - 
+
+
+
+
 
 - Specifying Fixture Scope
 
@@ -130,4 +151,4 @@
 - Renaming Fixtures
 
 
-- Parametrizing Fixtures
+- Parameterizing Fixtures
