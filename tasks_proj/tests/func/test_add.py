@@ -3,7 +3,7 @@ import tasks
 from tasks import Task
 
 
-def test_add_returns_valid_id():
+def test_add_returns_valid_id(tasks_db):
     # GIVEN an initialized tasks db
     # WHEN a new task is added
     # THEN returned task_id is of type int
@@ -13,7 +13,7 @@ def test_add_returns_valid_id():
 
 
 @pytest.mark.smoke
-def test_added_task_has_id_set():
+def test_added_task_has_id_set(tasks_db):
     # GIVEN an initialized tasks db
     # AND a new task is added
     new_task = Task('sit in chair', owner='me', done=True)

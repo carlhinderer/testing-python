@@ -3,7 +3,7 @@ import tasks
 from tasks import Task
 
 
-def test_add_1():
+def test_add_1(tasks_db):
     """ tasks.get() using id returned from add() works. """
     task = Task('breathe', 'BRIAN', True)
     task_id = tasks.add(task)
@@ -26,7 +26,7 @@ def equivalent(t1, t2):
                           Task('wake', 'brian'),
                           Task('breathe', 'BRIAN', True),
                           Task('exercise', 'BrIaN', False)])
-def test_add_2(task):
+def test_add_2(task, tasks_db):
     """ Demonstrate parametrize with one parameter. """
     task_id = tasks.add(task)
     t_from_db = tasks.get(task_id)
@@ -39,7 +39,7 @@ def test_add_2(task):
                           ('breathe', 'BRIAN', True),
                           ('eat eggs', 'BrIaN', False),
                           ])
-def test_add_3(summary, owner, done):
+def test_add_3(summary, owner, done, tasks_db):
     """Demonstrate parametrize with multiple parameters."""
     task = Task(summary, owner, done)
     task_id = tasks.add(task)
@@ -54,7 +54,7 @@ tasks_to_try = (Task('sleep', done=True),
                 Task('exercise', 'BrIaN', False))
 
 @pytest.mark.parametrize('task', tasks_to_try)
-def test_add_4(task):
+def test_add_4(task, tasks_db):
     """Slightly different take."""
     task_id = tasks.add(task)
     t_from_db = tasks.get(task_id)
@@ -65,7 +65,7 @@ task_ids = ['Task({},{},{})'.format(t.summary, t.owner, t.done)
             for t in tasks_to_try]
 
 @pytest.mark.parametrize('task', tasks_to_try, ids=task_ids)
-def test_add_5(task):
+def test_add_5(task, tasks_db):
     """Demonstrate ids."""
     task_id = tasks.add(task)
     t_from_db = tasks.get(task_id)
@@ -76,7 +76,7 @@ def test_add_5(task):
     pytest.param(Task('create'), id='just summary'),
     pytest.param(Task('inspire', 'Michelle'), id='summary/owner'),
     pytest.param(Task('encourage', 'Michelle', True), id='summary/owner/done')])
-def test_add_6(task):
+def test_add_6(task, tasks_db):
     """Demonstrate pytest.param and id."""
     task_id = tasks.add(task)
     t_from_db = tasks.get(task_id)
@@ -87,13 +87,13 @@ def test_add_6(task):
 class TestAdd():
     """Demonstrate parametrize and test classes."""
 
-    def test_equivalent(self, task):
+    def test_equivalent(self, task, tasks_db):
         """Similar test, just within a class."""
         task_id = tasks.add(task)
         t_from_db = tasks.get(task_id)
         assert equivalent(t_from_db, task)
 
-    def test_valid_id(self, task):
+    def test_valid_id(self, task, tasks_db):
         """We can use the same data for multiple tests."""
         task_id = tasks.add(task)
         t_from_db = tasks.get(task_id)
