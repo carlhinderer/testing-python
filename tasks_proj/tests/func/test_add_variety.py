@@ -2,7 +2,7 @@ import pytest
 import tasks
 from tasks import Task
 
-@pytest.mark.xfail()
+
 def test_add_1():
     """ tasks.get() using id returned from add() works. """
     task = Task('breathe', 'BRIAN', True)
@@ -22,13 +22,13 @@ def equivalent(t1, t2):
 
 
 @pytest.fixture(autouse=True)
-def initialized_tasks_db(tempdir):
+def initialized_tasks_db(tmpdir):
     """ Connect to db before testing, disconnect after. """
     tasks.start_tasks_db(str(tmpdir), 'tiny')
     yield
     tasks.stop_tasks_db()
 
-@pytest.mark.xfail()
+
 @pytest.mark.parametrize('task',
                          [Task('sleep', done=True),
                           Task('wake', 'brian'),
@@ -41,7 +41,6 @@ def test_add_2(task):
     assert equivalent(t_from_db, task)
 
 
-@pytest.mark.xfail()
 @pytest.mark.parametrize('summary, owner, done',
                          [('sleep', None, False),
                           ('wake', 'brian', False),
@@ -62,7 +61,6 @@ tasks_to_try = (Task('sleep', done=True),
                 Task('breathe', 'BRIAN', True),
                 Task('exercise', 'BrIaN', False))
 
-@pytest.mark.xfail()
 @pytest.mark.parametrize('task', tasks_to_try)
 def test_add_4(task):
     """Slightly different take."""
@@ -74,7 +72,6 @@ def test_add_4(task):
 task_ids = ['Task({},{},{})'.format(t.summary, t.owner, t.done)
             for t in tasks_to_try]
 
-@pytest.mark.xfail()
 @pytest.mark.parametrize('task', tasks_to_try, ids=task_ids)
 def test_add_5(task):
     """Demonstrate ids."""
@@ -83,7 +80,6 @@ def test_add_5(task):
     assert equivalent(t_from_db, task)
 
 
-@pytest.mark.xfail()
 @pytest.mark.parametrize('task', [
     pytest.param(Task('create'), id='just summary'),
     pytest.param(Task('inspire', 'Michelle'), id='summary/owner'),
@@ -95,7 +91,6 @@ def test_add_6(task):
     assert equivalent(t_from_db, task)
 
 
-@pytest.mark.xfail()
 @pytest.mark.parametrize('task', tasks_to_try, ids=task_ids)
 class TestAdd():
     """Demonstrate parametrize and test classes."""
