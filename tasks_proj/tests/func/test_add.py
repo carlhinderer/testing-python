@@ -3,8 +3,7 @@ import tasks
 from tasks import Task
 
 
-@pytest.mark.xfail()
-def test_add_returns_valid_id(tasks_db):
+def test_add_returns_valid_id():
     # GIVEN an initialized tasks db
     # WHEN a new task is added
     # THEN returned task_id is of type int
@@ -13,7 +12,6 @@ def test_add_returns_valid_id(tasks_db):
     assert isinstance(task_id, int)
 
 
-@pytest.mark.xfail()
 @pytest.mark.smoke
 def test_added_task_has_id_set():
     # GIVEN an initialized tasks db
@@ -30,10 +28,6 @@ def test_added_task_has_id_set():
 
 @pytest.fixture(autouse=True)
 def initialized_tasks_db(tmpdir):
-    # Setup: start db
     tasks.start_tasks_db(str(tmpdir), 'tiny')
-
     yield
-
-    # Teardown: stop db
     tasks.stop_tasks_db()
