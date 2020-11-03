@@ -2,11 +2,13 @@ import pytest
 import tasks
 from tasks import Task
 
-@pytest.fixture()
-def tasks_db(tmpdir):
+
+@pytest.fixture(autouse=True)
+def initialized_tasks_db(tmpdir):
     tasks.start_tasks_db(str(tmpdir), 'tiny')
     yield
     tasks.stop_tasks_db()
+
 
 @pytest.fixture()
 def tasks_just_a_few():
@@ -14,6 +16,7 @@ def tasks_just_a_few():
         Task('Write some code', 'Brian', True),
         Task("Code review Brian's code", 'Katie', False),
         Task('Fix what Brian did', 'Michelle', False))
+
 
 @pytest.fixture()
 def tasks_mult_per_owner():
