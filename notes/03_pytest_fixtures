@@ -160,7 +160,85 @@
 
 - Specifying Fixture Scope
 
+    - Fixtures can include the optional 'scope' parameter, which controls how often
+        a fixture gets set up and torn down.
 
+        scope='function'    # Runs once per test function (this is the default)
+        scope='class'       # Runs once per test class
+        scope='module'      # Runs once per module
+        scope='session'     # Runs once per session
+
+
+    - For example:
+
+        @pytest.fixture(scope='function')
+        def func_scope():
+            """ Function scope fixture """
+
+        @pytest.fixture(scope='module')
+        def mod_scope():
+            """ Module scope fixture """
+
+        @pytest.fixture(scope='session')
+        def sess_scope():
+            """ Session scope fixture """
+
+        @pytest.fixture(scope='class')
+        def class_scope():
+            """ Class scope fixture """
+
+
+        def test1(sess_scope, mod_scope, func_scope):
+            """ Use the session, module, and function scope fixtures. """
+
+
+        @pytest.mark.usefixtures('class_scope')
+        class TestSomething:
+
+            def test2(self):
+                """ Test using class scope fixture. """
+
+
+    - Fixtures can only depend on other fixtures in their same scope or a wider scope.
+        So, a function scope fixture can also depend on class, module, or session scope
+        fixtures.  But you can't go in reverse order.
+
+
+
+- Changing Scope for Tasks Project Fixtures
+
+    - So far, we've been setting up a temporary directory and new connection to
+        a database for each test.  Instead, we'll make the 'tasks_db' have a 
+        session scope.
+
+      In order to do this, we'll need to use 'tmpdir_factory' instead of 'tmpdir',
+        since 'tmpdir' is a function scope and 'tmpdir_factory' is a session scope.
+
+
+        # conftest.py
+        ------------------------------------------
+        @pytest.fixture(scope='session')
+        def tasks_db_session(tmpdir_factory):
+            """ Connect to db before tests, disconnect after """
+            temp_dir = tmpdir_factory.mktemp('temp')
+            tasks.start_tasks_db(str(temp_dir), 'tiny')
+            yield
+            tasks.stop_tasks_db()
+  
+        @pytest.fixture
+        def tasks_db(tasks_db_session):
+            """ An empty tasks db """
+            tasks.delete_all()
+
+
+    - Also, we'll make the tasks fixtures session-scope, since they are static and there
+        is no reason to instantiate them multiple times.
+
+        @pytest.fixture(scope='session')
+        def tasks_just_a_few(): ...
+
+        @pytest.fixture(scope='session')
+        def tasks_mult_per_owner(): ...
 
 
 

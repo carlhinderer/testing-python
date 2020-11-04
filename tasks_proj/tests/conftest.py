@@ -3,14 +3,22 @@ import tasks
 from tasks import Task
 
 
-@pytest.fixture()
-def tasks_db(tmpdir):
-    tasks.start_tasks_db(str(tmpdir), 'tiny')
+@pytest.fixture(scope='session')
+def tasks_db_session(tmpdir_factory):
+    """ Connect to db before tests, disconnect after """
+    temp_dir = tmpdir_factory.mktemp('temp')
+    tasks.start_tasks_db(str(temp_dir), 'tiny')
     yield
     tasks.stop_tasks_db()
 
 
-@pytest.fixture()
+@pytest.fixture
+def tasks_db(tasks_db_session):
+    """ An empty tasks db """
+    tasks.delete_all()
+
+
+@pytest.fixture(scope='session')
 def tasks_just_a_few():
     return (
         Task('Write some code', 'Brian', True),
@@ -18,7 +26,7 @@ def tasks_just_a_few():
         Task('Fix what Brian did', 'Michelle', False))
 
 
-@pytest.fixture()
+@pytest.fixture(scope='session')
 def tasks_mult_per_owner():
     return (
         Task('Make a cookie', 'Raphael'),
