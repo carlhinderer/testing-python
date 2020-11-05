@@ -369,3 +369,31 @@
             task_id = tasks.add(c_task)
             t_from_db = tasks.get(task_id)
             assert equivalent(t_from_db, c_task)
+
+
+
+- Parameterizing Fixtures in the Tasks Project
+
+    - So far, we've been using TinyDB for all of our tests.  Now, we also want to 
+        make all of our tests work with MongoDB.  First, we'll need to install and
+        configure MongoDB.
+
+
+    - Then, we'll update our fixture to run tests with both TinyDB and MongoDB.
+
+
+        # conftest.py
+        --------------------------------------
+
+        @pytest.fixture(scope='session', params=['tiny', 'mongo'])
+        def tasks_db_session(tmpdir_factory, request):
+            """ Connect to db before tests, disconnect after """
+            temp_dir = tmpdir_factory.mktemp('temp')
+            tasks.start_tasks_db(str(temp_dir), request.param)
+            yield
+            tasks.stop_tasks_db()
+
+        @pytest.fixture()
+        def tasks_db(tasks_db_session):
+            """ An empty tasks db """
+            tasks.delete_all()
