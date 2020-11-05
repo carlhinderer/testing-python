@@ -78,6 +78,52 @@
 
 - Using 'pytestconfig'
 
+    - The 'pytestconfig' builtin fixture allows you to control how pytest runs 
+        through command-line arguments and options, config files, plugins, and the
+        directory tests are run from.
+
+
+    - Here, we'll create a few custom command-line options.
+
+        # conftest.py
+        -------------------------------
+        def pytest_addoption(parser):
+            parser.addoption('--myopt', action='store_true', help='some boolean option')
+            parser.addoption('--foo', action='store', default='bar, help='foo: bar or baz')
+
+
+        # See the custom options
+        $ pytest --help
+
+
+        # test_config.py
+        -------------------------------
+        # Access the options from within a test
+        def test_option(pytestconfig):
+            print('"foo" set to', pytestconfig.getoption('foo'))
+            print('"myopt' set to', pytestconfig.getoption('myopt'))
+
+
+        # Now see it in action
+        $ pytest -s -q test_config.py::test_option
+        $ pytest -s -q --myopt test_config.py::test_option
+        $ pytest -s -q --foo bar test_config.py::test_option
+
+
+    - There are also builtin options you can access with information about the pytest session.
+
+        def test_pytestconfig(pytestconfig):
+            print('args :', pytestconfig.args)
+            print('inifile :', pytestconfig.inifile)
+            print('invocation_dir :', pytestconfig.invocation_dir)
+            print('rootdir :', pytestconfig.rootdir)
+            print('-k EXPRESSION :', pytestconfig.getoption('keyword'))
+            print('-v, --verbose :', pytestconfig.getoption('verbose'))
+            print('-q, --quiet :', pytestconfig.getoption('quiet'))
+            print('-l, --showlocals:', pytestconfig.getoption('showlocals'))
+            print('--tb=style :', pytestconfig.getoption('tbstyle'))
+
+
 
 - Using 'cache'
 
