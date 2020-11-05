@@ -4,6 +4,77 @@
 
 - Using 'tmpdir' and 'tmpdir_factory'
 
+    - The 'tmpdir' and 'tmpdir_factory' fixtures are used to create a temporary
+        file system directory before tests run, then remove the directory after 
+        they are finished.  For instance, we can store temporary database files used
+        by TinyDB and MongoDB in the directory.
+
+
+    - The 'tmpdir' fixture has function scope, so it is used for individual tests.  The
+        'tmpdir_factory' has session scope, so it is used for multiple tests.
+
+
+    - Here is an example of using 'tmpdir':
+
+        def test_tmpdir(tmpdir):
+            # Create a filename (file won't be created until it's written to)
+            a_file = tmpdir.join('something.txt')
+
+            # Create a subdirectory
+            subdir = tmpdir.mkdir('anything')
+
+            # Create a filename in the subdirectory
+            another_file = subdir.join('something-else.txt')
+
+            # The files will actually be created when they're written to
+            a_file.write('contents of file')
+            another_file.write('contents of this file')
+
+            # Read the files
+            assert a_file.read() == 'contents of file'
+            assert another_file.read() == 'contents of this file'
+
+
+    - Here is an example of 'tmpdir_factory':
+
+        def test_tmpdir_factory(tmpdir_factory):
+            # Create a temp directory
+            a_dir = tmpdir_factory.mktemp('mydir')
+
+            # Can get the parent directory if you need it
+            base_temp = tmpdir_factory.getbasetemp()
+
+            # Use the temp directory and files exactly like with tmpdir example
+
+
+
+- Using Temporary Directories for Other Scopes
+
+    - Here, we create use the 'tmpdir_factory' for adding a file for module scope tests.
+
+        import json, pytest
+
+        @pytest.fixture(scope='module')
+        def author_file_json(tmpdir_factory):
+            python_author_data = {
+                'Ned': {'City': 'Boston'},
+                'Brian': {'City': 'Portland'},
+                'Luciano': {'City': 'Sao Paolo'}
+            }
+
+            file = tmpdir_factory.mktemp('data').join('author_file.json')
+            with file.open('w') as f:
+                json.dump(python_author_data, f)
+
+            return file
+
+
+        def test_brian_in_portland(author_file_json):
+            with author_file_json.open() as f:
+                authors = json.load(f)
+            assert authors['Brian']['City'] == 'Portland'
+
+
 
 - Using 'pytestconfig'
 
