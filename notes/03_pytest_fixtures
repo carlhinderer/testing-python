@@ -244,11 +244,61 @@
 
 - Specifying Fixtures with 'usefixtures'
 
+    - In addition to adding a fixture to the parameter list if we want to use it, we
+        can also mark it with the 'usefixtures' decorator.
+
+        @pytest.mark.usefixtures('fixture1', 'fixture2')
+        def test_with_fixtures(): ...
+
+
+    - Note that if you want a test to return a value from a fixture, it must be in the
+        parameter list.
+
+
 
 - Using 'autouse' for Fixtures That Always Get Used
+
+    - If you want to avoid having to add the names of the fixtures you need to every
+        test, and you want a fixture to just run all the time, you can use the
+        'autouse=True' option.
+
+        import pytest
+        import time
+
+        @pytest.fixture(autouse=True, scope='session')
+        def footer_session_scope():
+            """ Report the time at the end of a session. """
+            yield
+            now = time.time()
+            print('finished : {}'.format(time.strftime('%d %b %X', time.localtime(now))))
+
+        @pytest.fixture(autouse=True)
+        def footer_function_scope():
+            """ Report test durations after each function. """
+            start = time.time()
+            yield
+            stop = time.time()
+            delta = stop - start
+            print('\ntest duration : {:0.3} seconds'.format(delta))
+
+        def test_1():
+            """ Simulate long-running test """
+            time.sleep(1)
+
+
+    - This feature can be useful, but using it is the exception rather than the rule.
+
 
 
 - Renaming Fixtures
 
+    - By default, the name of the fixture is the name of the function it is defined in.
+        If we want to give it a different (usually shorter) name, we can use the 'name'
+        parameter.
 
-- Parameterizing Fixtures
+        @pytest.fixture(name='lue')
+        def ultimate_answer_to_life_question():
+            return 42
+
+        def test_everything(lue):
+            assert lue == 42
