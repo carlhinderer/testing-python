@@ -170,6 +170,34 @@
 
 - Using 'capsys'
 
+    - The 'capsys' builtin fixture allows you to retrieve stdout and stderr from
+        some code, and it disables output capture temporarily.
+
+
+    - Suppose you have a function that prints to stdout.  We can test this.
+
+        def greeting(name):
+            print('Hi, {}'.format(name))
+
+        def test_greeting(capsys):
+            greeting('Earthling')
+            out, err = capsys.readouterr()
+            assert out == 'Hi, Earthling\n'
+            assert err == ''
+
+
+    - We can also test a function that prints to stderr.
+
+        def yikes(problem):
+            print('Yikes, {}'.format(problem), file=sys.stderr)
+
+        def test_yikes(capsys):
+            yikes('Out of coffee')
+            out, err = capsys.readouterr()
+            assert out == ''
+            assert 'Out of coffee' in err
+
+
 
 - Using 'monkeypatch'
 
