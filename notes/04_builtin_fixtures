@@ -127,6 +127,46 @@
 
 - Using 'cache'
 
+    - Usually, we want each test run to be independent, but sometimes, we want to
+        pass information about one test session to the next one.  The 'cache' builtin
+        fixture is used for that.
+
+
+    - Here are builtin features that use the cache.
+
+        # Rerun the tests that failed on the last run
+        $ pytest -lf
+
+        # Run all tests, starting with the ones that failed on last run
+        $ pytest -ff
+
+
+    - To see the information being stored in the cache
+
+        # Show cache
+        $ pytest --cache-show
+
+        # Or can look in the cache directory
+        $ cat.cache/v/cache/lastfailed
+
+
+    - The interface for using the cache is simple:
+
+        cache.get(key, default)
+        cache.set(key, value)
+
+
+    - Here is an example:
+
+        @pytest.fixture(autouse=True)
+        def check_duration(request, cache):
+            start_time = datetime.datetime.now()
+            yield
+            end_time = datetime.datetime.now()
+            duration = end_time - start_time
+            cache.set('duration', duration)
+
+
 
 - Using 'capsys'
 

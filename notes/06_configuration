@@ -2,4 +2,28 @@
 | CHAPTER 6 - CONFIGURATION                                |
 ------------------------------------------------------------
 
-- 
+- Understanding pytest Configuration Files
+
+
+- Changing the Default Command-Line Options
+
+
+- Registering Markers to Avoid Marker Typos
+
+
+- Requiring a Minimum pytest Version
+
+
+- Stopping pytest from Looking in the Wrong Places
+
+
+- Specifying Test Directory Locations
+
+
+- Changing Test Discovery Rules
+
+
+- Disallowing XPASS
+
+
+- Avoiding Filename Collisions

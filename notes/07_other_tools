@@ -2,4 +2,22 @@
 | CHAPTER 7 - USING PYTEST WITH OTHER TOOLS                |
 ------------------------------------------------------------
 
+- Debugging Test Failures with pdb
+
+
+- Determining Code Coverage with coverage.py
+
+
+- Swapping Out Parts of the System with mock
+
+
+- Testing Multiple Configuations with tox
+
+
+- Automated Test Running with Jenkins CI
+
+
+- Running Legacy Tests with unittest
+
+
 - 
