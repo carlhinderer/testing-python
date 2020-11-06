@@ -201,6 +201,65 @@
 
 - Using 'monkeypatch'
 
+    - A 'monkey patch' is a dynamic modification of a class or module during runtime.
+        This can be useful in changing input or output during testing.  The 'monkeypatch'
+        builtin fixture allows you to do this in the context of a single test.
+
+
+    - The 'monkeypatch' fixture provides the following functions:
+
+        setattr(target, name, value=<notset>, raising=True): Set an attribute.
+
+        delattr(target, name=<notset>, raising=True): Delete an attribute.
+
+        setitem(dic, name, value): Set a dictionary entry.
+
+        delitem(dic, name, raising=True): Delete a dictionary entry.
+
+        setenv(name, value, prepend=None): Set an environmental variable.
+
+        delenv(name, raising=True): Delete an environmental variable.
+
+        syspath_prepend(path): Prepend path to sys.path, Python’s list of import locations.
+
+        chdir(path): Change the current working directory.
+
+
+    - Here is an example of writing a dot configuration file.
+
+        import os, json
+
+        def read_cheese_preferences():
+            full_path = os.path.expanduser('~/.cheese.json')
+            with open(full_path, 'r') as f:
+                prefs = json.load(f)
+            return prefs
+
+        def write_cheese_preferences(prefs):
+            full_path = os.path.expanduser('~/.cheese.json')
+            with open(full_path, 'w') as f:
+                json.dump(prefs, f, indent=4)
+
+        def write_default_cheese_preferences():
+            _default_prefs = {
+                'slicing': ['manchego', 'sharp cheddar'],
+                'spreadable': ['Saint Andre', 'camembert', 'bucheron', 'goat',
+                               'humbolt fog', 'cambozola'],
+                'salads': ['crumbled feta']
+            }
+            write_cheese_preferences(_default_prefs)
+
+
+    - To override the default preferences, we can override the HOME directory being used.
+
+        def test_def_prefs_change_home(tmpdir, monkeypatch):
+            monkeypatch.setenv('HOME', tmpdir.mkdir('home'))
+            cheese.write_default_cheese_preferences()
+            expected = cheese._default_prefs
+            actual = cheese.read_cheese_preferences()
+            assert expected == actual
+
+
 
 - Using 'doctest_namespace'
 
