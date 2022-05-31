@@ -30,6 +30,9 @@
         # Delete a task
         $ cards delete 1
 
+        # Get count of cards
+        $ cards count
+
 
 
 - Python Dataclasses
