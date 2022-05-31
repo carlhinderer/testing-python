@@ -145,3 +145,157 @@
 
         # List fixtures used by a given test and their locations
         $ pytest --fixtures-per-test test_count.py::test_empty
+
+
+
+- Using Multiple Fixture Levels
+
+    - We are using the same database for all of our tests, but the individual tests depend on the
+        database being empty.  To fix this, we'll add a function-level test that clears our database.
+
+        # conftest.py
+        -----------------------
+        @pytest.fixture(scope="session")
+        def db():
+            """CardsDB object connected to a temporary database"""
+            with TemporaryDirectory() as db_dir:
+                db_path = Path(db_dir)
+                db_ = cards.CardsDB(db_path)
+                yield db_
+               db_.close()
+
+        @pytest.fixture(scope="function")
+        def cards_db(db):
+            """CardsDB object that's empty"""
+            db.delete_all()
+            return db
+
+
+
+- Using Multiple Fixtures Per Test or Fixture
+
+    - First, let's add a fixture with a few pre-canned tasks.
+
+        # conftest.py
+        -----------------------------
+        @pytest.fixture(scope="session")
+        def some_cards():
+            """List of different Card objects"""
+            return [
+                cards.Card("write book", "Brian", "done"),
+                cards.Card("edit book", "Katie", "done"),
+                cards.Card("write 2nd edition", "Brian", "todo"),
+                cards.Card("edit 2nd edition", "Katie", "todo"),
+            ]
+
+
+    - Now, we can use multiple fixtures in the same test:
+
+        # test_some.py
+        -----------------------------
+        def test_add_some(cards_db, some_cards):
+            expected_count = len(some_cards)
+            for c in some_cards:
+                cards_db.add_card(c)
+            assert cards_db.count() == expected_count
+
+
+    - Fixtures can also use multiple other fixtures:
+
+        # conftest.py
+        -----------------------------
+        @pytest.fixture(scope="function")
+        def non_empty_db(cards_db, some_cards):
+            """CardsDB object that's been populated with 'some_cards'"""
+            for c in some_cards:
+                cards_db.add_card(c)
+            return cards_db
+
+        # test_some.py
+        -----------------------------
+        def test_non_empty(non_empty_db):
+            assert non_empty_db.count() > 0
+
+
+
+- Deciding Fixture Scope Dynamically
+
+    - Let's say we have some reason we want to set up the database for each test function in some
+        situation.  We can change the scope at runtime for this purpose.
+
+        # conftest.py
+        -----------------------------------
+        @pytest.fixture(scope=db_scope)
+        def db():
+            """CardsDB object connected to a temporary database"""
+            with TemporaryDirectory() as db_dir:
+                db_path = Path(db_dir)
+                db_ = cards.CardsDB(db_path)
+                yield db_
+                db_.close()
+
+        def db_scope(fixture_name, config):
+            if config.getoption("--func-db", None):         # Use the --func-db argument for this
+                return "function"
+            return "session"
+
+        # This hook function is required to add a new flag
+        def pytest_addoption(parser):
+            parser.addoption(
+                "--func-db",
+                action="store_true",
+                default=False,
+                help="new db for each test",
+            )
+
+
+
+- Using 'autouse' for fixtures that always get used
+
+    - So far, each fixture we've created has been explicitly used by a test.  If we have some code
+        that needs to run all the time, but isn't connected to any of the tests themselves, we can
+        use the 'autouse=True' option.
+
+        import pytest
+        import time
+
+        @pytest.fixture(autouse=True, scope="session")
+        def footer_session_scope():
+            """Report the time at the end of a session."""
+            yield
+            now = time.time()
+            print("--")
+            print("finished : {}".format(time.strftime("%d %b %X", time.localtime(now))))
+            print("-----------------")
+
+        @pytest.fixture(autouse=True)
+        def footer_function_scope():
+            """Report test durations after each function."""
+            start = time.time()import time
+            yield
+            stop = time.time()
+            delta = stop - start
+            print("\ntest duration : {:0.3} seconds".format(delta))
+
+        def test_1():
+            """Simulate long-ish running test."""
+            time.sleep(1)
+
+        def test_2():
+            """Simulate slightly longer test."""
+            time.sleep(1.23)
+
+
+
+- Renaming Fixtures
+
+    - We can rename fixtures using the 'name' option if desired.
+
+        import pytest
+
+        @pytest.fixture(name="ultimate_answer")
+        def ultimate_answer_fixture():
+            return 42
+
+        def test_everything(ultimate_answer):
+            assert ultimate_answer == 42
