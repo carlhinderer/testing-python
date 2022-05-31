@@ -187,10 +187,10 @@
 
     # 'parameterize' with multiple parameters
     @pytest.mark.parameterize('summary, owner, done',
-                              [(​'sleep'​, None, False),
-                               (​'wake'​, ​'brian'​, False),
-                               (​'breathe'​, ​'BRIAN'​, True),
-                               (​'eat eggs'​, ​'BrIaN'​, False)])
+                              [('sleep', None, False),
+                               ('wake', 'brian', False),
+                               ('breathe', 'BRIAN', True),
+                               ('eat eggs', 'BrIaN', False)])
     def test_add(summary, owner, done):
         task = Task(summary, owner, done)
         task_id = tasks.add(task)

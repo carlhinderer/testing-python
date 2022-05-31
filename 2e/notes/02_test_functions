@@ -1,0 +1,261 @@
+-----------------------------------------------------------------------
+| CHAPTER 2 - WRITING TEST FUNCTIONS                                  |
+-----------------------------------------------------------------------
+
+- Installing the Sample Application
+
+    - The 'Cards' project is an installable Python package.  To install it locally:
+
+        $ cd code
+        $ pip install ./card_proj/
+
+
+    - Now, we can run the app and see how it works.
+
+        # Add some tasks
+        $ cards add do something --owner Brian
+        $ cards add do something else
+
+        # View all tasks
+        $ cards
+
+        # Update a task
+        $ cards update 2 --owner Brian
+
+        # Start and finish tasks
+        $ cards start 1
+        $ cards finish 1
+        $ cards start 2
+
+        # Delete a task
+        $ cards delete 1
+
+
+
+- Python Dataclasses
+
+    - Dataclasses (Python 3.7+) are classes that contain mostly data.
+
+        from dataclasses import Dataclass
+
+        @dataclass
+        class DataClassCard:
+            rank: str
+            suit: str
+
+
+    - Basically, this is just shorthand for the traditional:
+
+        class RegularCard:
+            def __init__(self, rank, suit):
+                self.rank = rank
+                self.suit = suit
+
+
+    - You can do things like instantiate, print, and compare dataclass instances out of the box.
+
+        # New instance
+        queen_of_hearts = DataClassCard('Q', 'Hearts')
+
+        # Attribute access
+        queen_of_hearts.rank
+
+        # Equality test
+        queen_of_hearts == DataClassCard('Q', 'Hearts')
+
+
+    - Note that this is similar to the 'namedtuple' that people have been using for years.  This is
+        equivalent:
+
+        from collections import namedtuple
+
+        NamedTupleCard = namedtuple('NamedTupleCard', ['rank', 'suit'])
+
+
+
+- Writing Knowledge-Building Tests
+
+    - The Cards code is split into 3 layers:
+
+        1. CLI = handles interactions with user, calls the API
+        2. API = handles most of logic of application, calls into DB layer
+        3. DB  = handles saving and retrieving application data
+
+
+    - The 'Card' class is used to pass information back and forth between the CLI and API.
+
+        @dataclass
+        class Card:
+            summary: str = None
+            owner: str = None
+            state: str = "todo"
+            id: int = field(default=None, compare=False)
+
+        @classmethod
+        def from_dict(cls, d):
+            return Card(**d)
+
+
+    - Here are some simple tests for our 'Card' class:
+
+        test_card.py
+        -------------------------------------------------------------
+        from cards import Card
+
+        def test_field_access():
+            c = Card("something", "brian", "todo", 123)
+            assert c.summary == "something"
+            assert c.owner == "brian"
+            assert c.state == "todo"
+            assert c.id == 123
+
+        def test_defaults():
+            c = Card()
+            assert c.summary is None
+            assert c.owner is None
+            assert c.state == "todo"
+            assert c.id is None
+
+        def test_equality():
+            c1 = Card("something", "brian", "todo", 123)
+            c2 = Card("something", "brian", "todo", 123)
+            assert c1 == c2
+
+        def test_equality_with_diff_ids():
+            c1 = Card("something", "brian", "todo", 123)
+            c2 = Card("something", "brian", "todo", 4567)
+            assert c1 == c2
+
+        def test_inequality():
+            c1 = Card("something", "brian", "todo", 123)
+            c2 = Card("completely different", "okken", "done", 123)
+            assert c1 != c2
+
+        def test_from_dict():
+            c1 = Card("something", "brian", "todo", 123)
+            c2_dict = {
+                "summary": "something",
+                "owner": "brian",
+                "state": "todo",
+                "id": 123,
+            }
+            c2 = Card.from_dict(c2_dict)
+            assert c1 == c2
+
+        def test_to_dict():
+            c1 = Card("something", "brian", "todo", 123)
+            c2 = c1.to_dict()
+            c2_expected = {
+                "summary": "something",
+                "owner": "brian",
+                "state": "todo",
+                "id": 123,
+            }
+            assert c2 == c2_expected
+
+
+
+- Failing Tests Explicitly
+
+    - A test will fail if:
+
+        1. An 'assert' statement fails, which raises an 'AssertionError'
+        2. The test code calls 'pytest.fail()'
+        3. Any other exception is raised
+
+
+    - To fail a test explicitly:
+
+        import pytest
+        from cards import Card
+
+        def test_with_fail():
+            c1 = Card("sit there", "brian")
+            c2 = Card("do something", "okken")
+            if c1 != c2:
+                pytest.fail("they don't match")
+
+
+
+- Writing Assertion Helper Functions
+
+    - We can write helper functions for complicated assertion checks.
+
+        def assert_identical(c1: Card, c2: Card):
+            __tracebackhide__ = True     # Leaves this function out of the traceback
+            assert c1 == c2
+            if c1.id != c2.id:
+                pytest.fail(f"id's don't match. {c1.id} != {c2.id}")
+
+        def test_identical():
+            c1 = Card("foo", id=123)
+            c2 = Card("foo", id=123)
+            assert_identical(c1, c2)
+
+
+
+- Tests that Expect Exceptions
+
+    - To test that an exception is raised:
+
+        # Exception should be raised if no file path is specified
+        def test_no_path_raises():
+            with pytest.raises(TypeError):
+                cards.CardsDB()
+
+
+
+- Structuring Test Functions
+
+    - The TDD movement (popularized by Kent Beck, 2001) named the pattern for arranging tests
+        'Arrange-Act-Assert'.
+
+      Later the BDD movement (popularized by Dan North, 2009) named their pattern 'Given-When-Then'.
+
+      Either way, the primary rule is that assertions should only be at the end of the test 
+        function.
+
+
+    - For example:
+
+        def test_to_dict():
+            # GIVEN a Card object with known contents
+            c1 = Card("something", "brian", "todo", 123)
+
+            # WHEN we call to_dict() on the object
+            c2 = c1.to_dict()
+
+            # THEN the result will be a dictionary with known content
+            c2_expected = {
+                "summary": "something",
+                "owner": "brian",
+                "state": "todo",
+                "id": 123,
+            }
+            assert c2 == c2_expected
+
+
+
+- Grouping Tests with Classes
+
+    - We can group tests into classes if we have a lot of them and they need to be organized.  The
+        test functions look exactly the same, except they take 'self' as their first parameter.
+
+        class TestEquality:
+            def test_equality(self):
+                c1 = Card("something", "brian", "todo", 123)
+                c2 = Card("something", "brian", "todo", 123)
+                assert c1 == c2
+
+
+    - We can also run a single class by itself:
+
+        # Run a specific test class
+        $ pytest -v test_classes.py::TestEquality
+
+        # Run a method in a class
+        $ pytest -v test_classes.py::TestEquality::test_equality
+
+
+    - Group tests together with classes, but don't try to use OOP features like inheritance.  This
+        will just make the test suite hard to understand.
