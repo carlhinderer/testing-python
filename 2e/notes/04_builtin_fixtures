@@ -1,0 +1,219 @@
+-----------------------------------------------------------------------
+| CHAPTER 4 - BUILTIN FIXTURES                                        |
+-----------------------------------------------------------------------
+
+- Using tmp_path and tmp_path_factory
+
+    - The 'tmp_path' and 'tmp_path_factory' fixtures are used to create temporary directories.
+
+      The 'tmp_path' function-scope fixture returns a 'pathlib.Path' instance that points to the
+        temporary directory that sticks around during your test and a bit longer.
+
+      The 'tmp_path_factory' session-scope fixture returns a 'TempPathFactory' object.  This object
+        can be used to create multiple temporary directories.
+
+
+    - They are used like this:
+
+        def test_tmp_path(tmp_path):
+            file = tmp_path / "file.txt"
+            file.write_text("Hello")
+            assert file.read_text() == "Hello"
+
+        def test_tmp_path_factory(tmp_path_factory):
+            path = tmp_path_factory.mktemp("sub")
+            file = path / "file.txt"
+            file.write_text("Hello")
+            assert file.read_text() == "Hello"
+
+
+    - In our previous implementation of the 'db' fixture, we used the standard library
+        'tempfile.TemporaryDirectory' to create a temporary fixture.  We'll change that to use the
+        builtin fixture instead.  We can remove the 'pathlib' and 'tempfile' imports.
+
+        @pytest.fixture(scope="session")
+        def db(tmp_path_factory):
+            """CardsDB object connected to a temporary database"""
+            db_path = tmp_path_factory.mktemp("cards_db")
+            db_ = cards.CardsDB(db_path)
+            yield db_
+            db_.close()
+
+
+    - Note that there are also 'tmp_dir' and 'tmpdir_factory' fixtures, which return the type of Path
+        objects used in Python <3.4.
+
+
+
+- Using capsys
+
+    - Sometimes the application code is supposed to output something to 'stdout' or 'stderr'.
+        The 'capsys' fixture enables the capturing of writes to either one.
+
+        import cards
+
+        def test_version_v2(capsys):
+            cards.cli.version()                             # Call method that prints version
+            output = capsys.readouterr().out.rstrip()       # Get stderr output with newline stripped off
+            assert output == cards.__version__
+
+
+    - In some cases, you may want to see printed output in the console instead of having it swallowed
+        by capsys.  We can use the 'disabled' method in this case.
+
+        def test_disabled(capsys):
+            with capsys.disabled():
+                print("\ncapsys disabled print")
+
+
+    - There are a few other similar builtin fixtures:
+
+        capfd = Like capsys, but captures file descriptors 1 and 2 (which are usually stdout and stderr)
+
+        capsysbinary = Captures bytes instead of text
+
+        capfdbinary = Captures bytes on file descriptors 1 and 2
+
+        caplog = Captures output written with the 'logging' package
+
+
+
+- Using monkeypatch
+
+    - In the previous section, we were able to use 'capsys' to test our CLI program.  However, we will
+        test it a different way going forward.
+
+
+    - Our CLI application uses the 'Typer' library, which includes a runner feature that allows us
+        to test more of our code, looks like a command-line test, remains in process, and provides us
+        with output hooks.
+
+      It is used like this:
+
+        from typer.testing import CliRunner
+
+        def test_version_v3():
+            runner = CliRunner()
+            result = runner.invoke(cards.app, ["version"])
+            output = result.output.rstrip()
+            assert output == cards.__version__
+
+
+    - A 'monkey patch' is a dynamic modification of a class or module during runtime.  During testing,
+        monkey patching is a convenient way to take over part of the runtime environment to replace
+        input or output dependencies for testing convenience.
+
+      The 'monkeypatch' fixture allows you to this in the context of a single test.  It is used to
+        modify objects, dictionaries, environment variables, the python search path, or the current
+        directory.
+
+
+    - The 'monkeypatch' fixture has the following functions:
+
+        setattr(target, name, value, raising=True)       # Sets an attribute
+        delattr(target, name, raising=True)              # Deletes an attribute
+
+        setitem(dic, name, value)                        # Sets a dictionary entry
+        delitem(dic, name, raising=True)                 # Deletes a dictionary entry
+
+        setenv(name, value, prepend=None)                # Sets an environment variable
+        delenv(name, raising=True)                       # Deletes an environment variable
+
+        syspath_prepend(path)                            # Prepends path to sys.path, which is Python’s 
+                                                         #   list of import locations
+
+        chdir(path)                                      # Changes the current working directory
+
+      The 'raising' parameter tells pytest whether to raise an exception if the item is missing.
+
+
+    - We'll be testing the configuration code in our 'cli' that checks for an environment variable to
+        be set for the database directory, and uses a default value if not.
+
+        def get_path():
+            db_path_env = os.getenv("CARDS_DB_DIR", "")
+            if db_path_env:
+                db_path = pathlib.Path(db_path_env)
+            else:
+                db_path = pathlib.Path.home() / "cards_db"
+            return db_path
+
+
+    - And here is our test code:
+
+        # test_config.py
+        ---------------------------
+        from typer.testing import CliRunner
+        import cards
+
+        # Helper for using Typer CLI runner
+        def run_cards(*params):
+            runner = CliRunner()
+            result = runner.invoke(cards.app, params)
+            return result.output.rstrip()
+
+        # Test the helper
+        def test_run_cards():
+            assert run_cards("version") == cards.__version__
+
+        # Test the config by mocking cards.cli's 'get_path' function
+        def test_patch_get_path(monkeypatch, tmp_path):
+            def fake_get_path():
+                return tmp_path
+
+            monkeypatch.setattr(cards.cli, "get_path", fake_get_path)
+            assert run_cards("config") == str(tmp_path)
+
+        # Test the config by mocking the 'home' method in pathlib.Path
+        def test_patch_home(monkeypatch, tmp_path):
+            full_cards_dir = tmp_path / "cards_db"
+
+            def fake_home():
+                return tmp_path
+
+            monkeypatch.setattr(cards.cli.pathlib.Path, "home", fake_home)
+            assert run_cards("config") == str(full_cards_dir)
+
+        # Mock an environment variable
+        def test_patch_env_var(monkeypatch, tmp_path):
+            monkeypatch.setenv("CARDS_DB_DIR", str(tmp_path))
+            assert run_cards("config") == str(tmp_path)
+
+
+    - The more experience you get mocking and monkey-patching to write tests, the more you'll want to
+        avoid it whenever possible.  Use sparingly.
+
+
+
+- Other Builtin Fixtures
+
+    - To get the full list of builtin fixtures:
+
+        $ pytest --fixtures
+
+
+    - The 'cache' fixture is used to store and retrieve values across pytest runs.  This makes flags
+        like '--last-failed' and '--failed-first' possible.
+
+
+    - The 'doctest_namespace' fixture is useful if you want to run doctest-style tests.
+
+
+    - The 'pytestconfig' fixture is used to get access to configuration values, pluginmanager, and
+        plugin hooks.
+
+
+    - The 'record_property' and 'record_testsuite_property' fixtures are used to add extra properties
+        to the test or test suite.  This is especially useful for adding data to an XML report to
+        be used by CI tools.
+
+
+    - The 'recwarn' fixture is used to test warning messages.
+
+
+    - The 'request' fixture is used to provide information on the executing test function.  This is
+        most commonly used during fixture parameterization.
+
+
+    - The 'pytester' and 'testdir' fixtures are used to provide a temporary test directory for aid in
+        running and testing pytest plugins.

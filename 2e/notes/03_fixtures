@@ -8,6 +8,7 @@
     - Can be used to get a data set for tests to work on
     - Can be used to get a system into a known state before tests
     - Can be used to get data ready for multiple tests
+    - Fixtures can return data using either 'return' or 'yield'
 
 
     - Simple Example
