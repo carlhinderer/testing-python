@@ -1,0 +1,168 @@
+-----------------------------------------------------------------------
+| CHAPTER 6 - MARKERS                                                 |
+-----------------------------------------------------------------------
+
+- Markers
+
+    - In pytest, 'markers' are a way to tell pytest there is something special about a particular test.
+        They are essentially tags or labels.
+
+
+    - Here are pytest's builtin markers:
+
+        # Adds a warning filter to the given test
+        @pytest.mark.filterwarnings(warning)
+
+        # Skips the test with an optional reason
+        @pytest.mark.skip(reason=None)
+
+        # Skips the test if any of conditions are True
+        @pytest.mark.skipif(condition, ..., *, reason)
+
+        # Tells pytest that we expect the test to fail
+        @pytest.mark.xfail(condition, ..., *, reason, run=True, raises=None, strict=xfail_strict)
+
+        # Calls test function multiple times with different args
+        @pytest.mark.parametrize(argnames, argvalues, indirect, ids, scope)
+
+        # Marks tests as needing all the specified fixtures
+        @pytest.mark.usefixtures(fixturename1, fixturename2, ...)
+
+
+
+- Skipping Tets with pytest.mark.skip
+
+    - The 'skip' marker allows to skip a test:
+
+        import pytest
+
+        @pytest.mark.skip(reason="Card doesn't support < comparison yet")➤
+        def test_less_than():
+            c1 = Card("a task")
+            c2 = Card("b task")
+            assert c1 < c2
+
+
+
+- Skipping Tests Conditionally with pytest.mark.skipif
+
+    - If we want to run some tests for version 2.x, but not for version 1.x:
+
+        import cards
+        from packaging.version import parse
+
+        @pytest.mark.skipif(
+            parse(cards.__version__).major < 2,
+            reason="Card < comparison not supported in 1.x",
+        )
+        def test_less_than():
+            c1 = Card("a task")
+            c2 = Card("b task")
+            assert c1 < c2
+
+
+
+- Expecting Tests to Fail with pytest.mark.xfail
+
+    - If we want to run all tests, even those we know will fail, we can use the 'xfail' marker.  If
+        we want passing tests to be marked 'XPASS' we use 'strict=False', and we pass the 'strict=True'
+        option to fail the tests.
+
+        @pytest.mark.xfail(
+            parse(cards.__version__).major < 2,
+            reason="Card < comparison not supported in 1.x",
+        )
+        def test_less_than():
+        c1 = Card("a task")
+        c2 = Card("b task")
+        assert c1 < c2
+        
+        @pytest.mark.xfail(reason="XPASS demo")
+        def test_xpass():
+        c1 = Card("a task")
+        c2 = Card("a task")
+        assert c1 == c2
+        
+        @pytest.mark.xfail(reason="strict demo", strict=True)
+        def test_xfail_strict():
+        c1 = Card("a task")
+        c2 = Card("a task")
+        assert c1 == c2
+
+
+
+- Selecting Tests with Custom Markers
+
+    - Custom markers are like tags or labels.  For instance, it is common to mark our happy path tests
+        as 'smoke tests'.  
+
+        @pytest.mark.smoke
+        def test_start(cards_db):
+            i = cards_db.add_card(Card("foo", state="todo"))
+            cards_db.start(i)
+            c = cards_db.get_card(i)
+            assert c.state == "in prog"
+
+
+    - We need to register our custom markers in 'pytest.ini'.
+
+        pytest.ini
+        ---------------------------
+        [pytest]
+        markers =
+            smoke: subset of tests
+            exception: check for expected exceptions
+
+
+    - To run just these tests:
+
+        $ pytest -v -m smoke test_start.py
+
+
+
+- Marking Files and Classes
+
+    - We can also add markers to entire files or classes to mark multiple tests.  To create a file-level
+        marker, we use the 'pytestmark' attribute.
+
+        # test_finish.py
+        ------------------------
+        import pytest
+        from cards import Card, InvalidCardId
+
+        pytestmark = pytest.mark.finish
+
+
+    - To create a class-level marker:
+
+        @pytest.mark.smoke
+        class TestFinish:
+            ...
+
+
+
+- Markers Advanced Features
+
+    - Note that we can always apply multiple markers to a function.
+
+        @pytest.mark.smoke
+        @pytest.mark.exception
+        def test_finish_non_existent(cards_db):
+            ...
+
+
+    - We can specify conditions about which markers to run:
+
+        $ pytest -v -m "finish and exception"
+        $ pytest -v -m "(exception or smoke) and (not finish)"
+
+
+    - If we have a type on a marker that doesn't actually exist, we'll get a warning.  We can use 
+        strict mode to cause a failure instead.
+
+        $ pytest --strict-markers -m smoke
+
+
+    - We can list all markers with the '--markers' option.
+
+        $ pytest --markers
