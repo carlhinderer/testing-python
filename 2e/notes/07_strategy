@@ -1,0 +1,117 @@
+-----------------------------------------------------------------------
+| CHAPTER 7 - STRATEGY                                                |
+-----------------------------------------------------------------------
+
+- Determining Test Scope
+
+    - Possible Testing Concerns
+
+        - User-visible behavior (this is most likely to be tested)
+        - Security
+        - Performance
+        - Concurrent load
+        - Input validation
+
+
+    - Testing Cards
+
+        - Test the behavior of user-visible functionality
+        - Postpone security, performance, load testing for now
+        - Test to make sure we can handle unexpected input
+
+
+
+- Considering Software Architecture
+
+    - Testing Questions
+
+        - At what level should we be testing?  UI, lower level, all levels?
+        - How easy are the different levels to test?
+        - Who is responsible for testing at the different levels?
+
+
+    - Cards Architecture
+
+        - 'cli.py' front-end is simple as possible, uses 'Typer' and 'Rich' packages
+        - 'api.py' contains most logic
+        - 'db.py' storage layer is simple as possible, uses 'TinyDB'
+
+
+    - Cards testing strategy
+
+        - Test features through API
+        - Test the CLI enough to verify it connects to the API properly
+        - We can add DB layer tests if it becomes necessary
+
+
+
+- Evaluating the Features to Test
+
+    - We may have to prioritize which tests to add.  We can prioritize testing based on the following
+        factors:
+
+        - Recent = new features or recently modified code
+        - Core = essential functions required for your project to be useful
+        - Risk = areas that pose risk, like 3rd party code you just don't trust
+        - Problematic = Functionality that frequently breaks or gets defect reports
+        - Expertise = features or algorithms understood by a limited number of people
+
+
+
+- Creating Test Cases
+
+    - Method for creating cases
+
+        1. Start with a non-trivial, happy-path test case
+
+        2. Then, look at cases that represent:
+
+            - Interesting sets of input
+            - Interesting starting states
+            - Interesting end states
+            - All possible error states
+
+
+    - Interesting starting states
+
+        - Empty database
+        - One item
+        - More than one item
+
+
+    - Set of core functionality test cases
+
+        1. count
+             > count from an empty db
+             > count with one item
+             > count with more than one item
+
+        2. add
+             > add to empty db, with summary
+             > add to non-empty db, with summary
+             > add card with both summary and owner set
+             > add card with missing summary
+             > add a duplicate card
+
+        3. delete
+             > delete one from a database with more than one
+             > delete the last card
+             > delete a non-existent card
+
+        4. start and finish
+             > start from “todo,” “in prog,” and “done” states
+             > start an invalid ID
+             > finish from “todo,” “in prog,” and “done” states
+             > finish an invalid ID
+
+        5. other functions
+             > update the owner of a card
+             > update the summary of a card
+             > update owner and summary of a card at the same time
+             > update a non-existent card
+
+             > list from an empty database
+             > list from a non-empty database
+
+             > config returns the correct database path
+             > version returns the correct version
