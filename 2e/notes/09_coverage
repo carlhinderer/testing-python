@@ -1,0 +1,83 @@
+-----------------------------------------------------------------------
+| CHAPTER 9 - COVERAGE                                                |
+-----------------------------------------------------------------------
+
+- Using 'coverage.py' with pytest-cov
+
+    - 'coverage.py' is the preferred Python coverage tool.  'pytest-cov' is a popular pytest plugin 
+        that makes the command line a little shorter.
+
+
+    - First, we'll need to install the 2 packages:
+
+        $ pip install coverage
+        $ pip install pytest-cov
+
+
+    - Then, we can run pytest with the '--cov' flag and a coverage report will be included at the end of
+        the results.
+
+        $ pytest --cov=cards ch7
+
+
+    - We can also just run coverage by itself:
+
+        $ coverage run --source=cards -m pytest ch7
+        $ coverage report
+
+
+    - Note that since we're running the tests on an installed package, we'll add a coverage config
+        setting to specify that the installed package and local directory are the same.
+
+        # .coveragerc
+        ---------------------------
+        [paths]
+        source =
+            cards_proj/src/cards
+            */site-packages/cards
+
+
+    - We can see which lines of each file are missing code coverage with:
+
+        # Pytest version
+        $ pytest --cov=cards --cov-report=term-missing ch7
+
+        # Coverage version
+        $ coverage report --show-missing
+
+
+
+- Generating HTML reports
+
+    - We can generate HTML reports to view coverage data in more detail.
+
+        # Pytest version
+        $ pytest --cov=cards --cov-report=html ch7
+
+        # Coverage version
+        $ pytest --cov=cards ch7
+        $ coverage html
+
+
+
+- Advanced Coverage Options
+
+    - We can use a 'pragma' statement to exclude a block of code from coverage:
+
+        if __name__ == '__main__': # pragma: no cover
+            main()
+
+
+    - To get a coverage report for the test directory itself also:
+
+        $ pytest --cov=cards --cov=ch7 ch7
+
+
+    - To get coverage for a single directory:
+
+        $ pytest --cov=ch9/some_code ch9/some_code/test_some_code.py
+
+
+    - To get coverage for a single file:
+
+        $ pytest --cov=single_file single_file.py
