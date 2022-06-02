@@ -132,4 +132,4 @@
 
     XPASSS = Test was marked with 'xfail', but it ran and passed
 
-    ERROR = Exception happened furing execution of fixture or hook function, not in test function
+    ERROR = Exception happened during execution of fixture or hook function, not in test function

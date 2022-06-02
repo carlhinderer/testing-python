@@ -1,0 +1,94 @@
+-----------------------------------------------------------------------
+| CHAPTER 8 - CONFIGURATION FILES                                     |
+-----------------------------------------------------------------------
+
+- pytest Config Files
+
+    - Here are the non-test files relevant to pytest:
+
+        pytest.ini = Primary pytest config file, also defines pytest rootdir
+
+        conftest.py = Contains fixtures and hook functions
+
+        __init__.py = Allows you to have identical test file names in multiple directories
+
+        tox.ini, pyproject.toml, setup.cfg = Files that can take the place of 'pytest.ini'
+
+            > tox.ini is used by 'tox', the command line testing tool
+            > pyproject.ini is used for packaging Python projects
+            > setup.cfg is also used for packaging
+
+
+    - Here is a sample project directory structure:
+
+        cards_proj
+        ├── ... top level project files, src dir, docs, etc ...
+        ├── pytest.ini
+        └── tests
+            ├── conftest.py
+            ├── api
+            │     ├── __init__.py
+            │     ├── conftest.py
+            │     └── ... test files for api ...
+            └── cli
+                  ├── __init__.py
+                  ├── conftest.py
+                  └── ... test files for cli ...
+
+
+
+- Saving Settings and Flags in pytest.ini
+
+    - Here is an example 'pytest.ini' file:
+
+        # pytest.ini
+        --------------------------
+        [pytest]
+        addopts =
+            --strict-markers
+            --strict-config
+            -ra
+
+        testpaths = tests
+
+        markers =
+            smoke: subset of tests
+            exception: check for expected exceptions
+
+
+
+- Using tox.ini, pyproject.toml, or setup.cfg in place of pytest.ini
+
+    - If you are using tox (Ch 11), you use a 'tox.ini' instead, which has an identical 'pytest'
+        section.
+
+        # tox.ini
+        ---------------------------
+        [tox]
+        ; tox specific settings
+
+        [pytest]
+        ; pytest settings same as above
+
+
+    - The 'pyproject.toml' file started as a way to package Python projects.  Nowadays, you can 
+        configure it to use 'setuptools', and some people use it as their pytest config file.
+
+        # pyproject.toml
+        ---------------------------
+        [tool.pytest.ini_options]
+        ...
+
+
+    - The 'setup.cfg', another option, has syntax very similar to the 'pytest.ini' file.
+
+
+
+- Determining a Root Directory and Config File
+
+    - Before running any tests, pytest will search through the entire directory it was run in for a
+        config file.  In order to avoid this extra searching, it makes sense to add a 'pytest.ini'
+        at the project root, even if it is empty.
+
+      This has the added advantage that pytest always knows where to run tests from regardless of 
+        your current working directory.
