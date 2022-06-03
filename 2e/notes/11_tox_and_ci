@@ -1,0 +1,170 @@
+-----------------------------------------------------------------------
+| CHAPTER 11 - TOX AND CI                                             |
+-----------------------------------------------------------------------
+
+- tox
+
+    - 'tox' is a command-line tool that lets you run your tests either locally or on a CI server.  
+        We'll use it to test our project using different versions of Python.
+
+
+    - tox uses project information in either 'setup.py' or 'pyproject.toml' for the package under test 
+        to create an installable distribution of your package. It looks in 'tox.ini for a list of 
+        environments, and then for each environment, tox
+
+        1. creates a virtual environment in a .tox directory,
+        2. pip installs some dependencies,
+        3. builds your package,
+        4. pip installs your package, and
+        5. runs your tests.
+
+
+    - We'll put a 'tox.ini' file at the root of the project.
+
+        # tox.ini
+        -------------------------
+        [tox]
+        envlist = py310
+        isolated_build = True
+
+        [testenv]
+        deps =
+          pytest
+          faker
+        commands = pytest
+
+
+    - Then we can install and run tox.
+
+        $ pip install tox
+
+        # Run tox
+        $ tox
+
+
+
+- Testing Multiple Python Versions
+
+    - We can add more environments to the 'envlist' to test different versions of Python.
+
+        # tox_multiple_pythons.ini
+        -----------------------------
+        [tox]
+        envlist = py37, py38, py39, py310
+        isolated_build = True
+        skip_missing_interpreters = True
+
+
+        # Run the configuration
+        $ tox -c tox_multiple_pythons.ini
+
+
+    - By default, the different test environments will run serially.  To have them run in parallel
+        instead:
+
+        $ tox -c tox_multiple_pythons.ini -p
+
+
+
+- Adding a Coverage Report to tox
+
+    - To add coverage to the 'tox.ini':
+
+        # tox_coverage.ini
+        ---------------------------
+        [testenv]
+        deps =
+          pytest
+          faker
+        pytest-cov
+        commands = pytest --cov=cards
+
+        # .coveragerc to tell coverage which source paths are identical
+        --------------------------
+        [paths]
+        source =
+          src
+          .tox/*/site-packages
+
+
+        # Run with coverage report
+        $ tox -c tox_coverage.ini -e py310
+
+
+    - We can also specify a minimum coverage level, under which the build will fail.
+
+        # Update tox_coverage.ini
+        -----------------------------------
+        ...
+        commands = pytest --cov=cards --cov=tests --cov-fail-under=100
+
+
+
+- Passing pytest Parameters Through tox
+
+    - If we add '{posargs}' to our pytest command in the 'tox.ini', we can pass arbitrary arguments
+        to pytest.
+
+        # Update tox_coverage.ini
+        -----------------------------------
+        ...
+        pytest --cov=cards --cov=tests --cov-fail-under=100 {posargs}
+
+
+        # Everything after the -- is passed as args to pytest
+        $ tox -c tox_posargs.ini -e py310 -- -k test_version --no-cov
+
+
+
+- Running tox with Github Actions
+
+    - Github Actions is a cloud-based CI tool provided by Github.  To add Actions to a repo, you just
+        need to add a workflow .yml file to the '.github/workflows' folder at the root of your project.
+
+        # cards_proj/.github/workflows/main.yml
+        -------------------------------------------
+        name: CI
+
+        on: [push, pull_request]
+
+        jobs:
+          build:
+
+            runs-on: ubuntu-latest
+            strategy:
+              matrix:
+                python: ["3.7", "3.8", "3.9", "3.10"]
+
+            steps:
+              - uses: actions/checkout@v2
+              - name: Setup Python
+                uses: actions/setup-python@v2
+                with:
+                  python-version: ${{ matrix.python }}
+              - name: Install Tox and any other packages
+                run: pip install tox
+              - name: Run Tox
+                run: tox -e py
+
+
+    - Here is an explanation of the fields included:
+
+        name = can be anything, shows up in the GitHub Actions user interface
+
+        on: [push, pull_request] = run our tests every time we either push code a pull request is created
+
+        runs-on: ubuntu-latest = specifies which operating system to run the tests on
+
+        matrix: python: ["3.7", "3.8", "3.9", "3.10"] = specifies which Python version to run.
+
+        steps = list of steps, name of each step can be anything and is optional
+
+        uses: actions/checkout@v2 = Actions tool that checks out repo so rest of workflow can access it
+
+        uses: actions/setup-python@v2 = Actions tool that gets Python configured & installed
+
+        with: python-version: ${{ matrix.python }} = create an environment for each of Python versions
+
+        run: pip install tox = installs tox.
+
+        run: tox -e py = runs tox. (-e works to select correct version of Python specified in tox.ini)
