@@ -115,3 +115,171 @@
             with mock.patch.object(cards, "__version__", "1.2.3"):
                 result = runner.invoke(app, ["version"])
                 assert result.stdout.rstrip() == "1.2.3"
+
+
+
+- Mocking a Class and Methods
+
+    - Next, we'll test the 'config' command:
+
+        # src/cards/cli.py
+        ---------------------------
+        @app.command()
+        def config():
+            """List the path to the Cards db."""
+            with cards_db() as db:
+                print(db.path())
+
+
+    - We can see how to mock the 'CardsDB' class with this example:
+
+        # test_mock.py
+        ---------------------------
+        def test_mock_CardsDB():
+            with mock.patch.object(cards, "CardsDB") as MockCardsDB:
+                print()
+                print(f" class:{MockCardsDB}")
+                print(f"return_value:{MockCardsDB.return_value}")
+                with cards.cli.cards_db() as db:
+                    print(f" object:{db}")
+
+
+    - If someone calls a mock object, a new mock object is returned.  It is also accessible as the
+        'return_value' of the original object.
+
+      When someone calls 'CardsDB', they won't get a new 'CardsDB' object, but will get a mock object
+        that is assigned to the 'return_value' attribute of the original.  This object is where we can
+        change the 'path' attribute.
+
+        def test_mock_path():
+            with mock.patch.object(cards, "CardsDB") as MockCardsDB:
+                MockCardsDB.return_value.path.return_value = "/foo/"
+                with cards.cli.cards_db() as db:
+                    print()
+                    print(f"{db.path=}")
+                    print(f"{db.path()=}")
+
+
+    - Finally, we'll put the mock for the database into a fixture, since we'll need it for lots of
+        test methods.
+
+        # test_mock.py
+        -----------------------------
+        # Mock the CardsDB object so that tests can use it to replace things like 'path'
+        @pytest.fixture()
+        def mock_cardsdb():
+            with mock.patch.object(cards, "CardsDB", autospec=True) as CardsDB:
+                yield CardsDB.return_value
+
+        # Test the config command
+        def test_config(mock_cardsdb):
+            mock_cardsdb.path.return_value = "/foo/"
+            result = runner.invoke(app, ["config"])
+            assert result.stdout.rstrip() == "/foo/"
+
+
+
+- Keeping Mock and Implementation in Sync with Autospec
+
+    - By default, mock objects are very flexible.  They'll accept a method call or a parameter even if
+        they are mistyped.  If we add 'autospec=True', pytest will check whether the attribute it is
+        supposed to be mocking exists.  
+
+        def test_bad_mock():
+            with mock.patch.object(cards, "CardsDB", autospec=True) as CardsDB:
+                db = CardsDB("/some/path")
+                db.path()      # Passes
+                db.path(35)    # Fails due to invalid arguments
+                db.not_valid() # Fails due to invalid function
+
+
+
+- Making Sure Functions are Called Correctly
+
+    - Sometimes, we want to test code that doesn't have a useful return value.  In this case, we can
+        just ask the mock object if it was called correctly.
+
+
+    - For instance, we have the command 'cards add some tasks -o brian'.  After calling this method,
+        instead of checking that the item made it all the way to the database (which we'll check in
+        the api layer), we'll just ask the mock if it was called correctly.
+
+
+    - The 'add' command calls 'db.add_card()' with a 'Card' object:
+
+        db.add_card(cards.Card(summary, owner, state="todo"))
+
+      To make sure it was called correctly, we can ask the mock:
+
+        def test_add_with_owner(mock_cardsdb):
+            cards_cli("add some task -o brian")
+            expected = cards.Card("some task", owner="brian", state="todo")
+            mock_cardsdb.add_card.assert_called_with(expected)
+
+
+
+- Creating Error Conditions
+
+    - Now, we'll check to make sure the Cards CLI deals with error conditions correctly.  Here is the
+        'delete' implementation:
+
+        @app.command()
+        def delete(card_id: int):
+            """Remove card in db with given id."""
+            with cards_db() as db:
+                try:
+                    db.delete_card(card_id)
+                except cards.InvalidCardId:
+                    print(f"Error: Invalid card id {card_id}")
+
+
+    - To test CLI's handling of an error condition, we can pretent that 'delete_card' generates an 
+        exception by assigning the exception to the mock object 'side_effect' attribute.
+
+        def test_delete_invalid(mock_cardsdb):
+            mock_cardsdb.delete_card.side_effect = cards.api.InvalidCardId
+            out = cards_cli("delete 25")
+            assert "Error: Invalid card id 25" in out
+
+
+    - Ideally, we want to test behavior rather than implementation.  Mocks test implementation, so it's
+        best to use them sparingly and thoughtfully.  For many things like simulating external systems, 
+        mocking is the only option.
+
+
+
+- Testing at Multiple Levels to Avoid Mocking
+
+    - Note that we could also just test the CLI by using the API.  This way we could avoid having to
+        mock anyting at all.
+
+        def test_add_with_owner(cards_db):
+            """
+            A card shows up in the list with expected contents.
+            """
+            cards_cli("add some task -o brian")
+            expected = cards.Card("some task", owner="brian", state="todo")
+            all_cards = cards_db.list_cards()
+            assert len(all_cards) == 1
+            assert all_cards[0] == expected
+
+
+    - We could just test all the behavior in the application this way.  It would involve parsing the
+        'cards list' output to verify results.
+
+
+
+- Using Plugins to Assist Mocking
+
+    - The 'pytest-mock' provides a 'mocker' fixture that cleans up after itself so you don't have to
+        use a 'with' block.
+
+    - For mocking database access, try 'pytest-postgresql', 'pytest-mongo', 'pytest-mysql', and 
+        'pytest-dynamodb'.
+
+    - For mocking HTTP servers, try 'pytest-httpserver'.
+
+    - For mocking requests, try 'responses' and 'betamax'.
+
+    - And there are even more tools, such as 'pytest-rabbitmq', 'pytest-solr', 'pytest-elasticsearch',
+          and 'pytest-redis'.
