@@ -1,0 +1,117 @@
+-----------------------------------------------------------------------
+| CHAPTER 10 - MOCKING                                                |
+-----------------------------------------------------------------------
+
+- Isolating the CLI
+
+    - We're going to use the 'mock' package ('unittest.mock', standard library in Python 3.3) to test
+        the CLI to ensure the API is being called correctly for all features.
+
+      Mocks are also sometimes called test doubles, spies, fakes, or stubs.
+
+
+    - The Cards CLI uses the 'Typer' library to handle all command-line parts, and then passes commands
+       to the API.  The 'cli.py' module imports the 'cards' namespace, and through this namespace, it
+       accesses:
+
+       - cards.__version__ (a string)
+       - cards.CardDB (a class representing the main API methods)
+       - cards.InvalidCardID (an exception)
+       - cards.Card (the primary data type for use between the CLI and API)
+
+
+    - Most of the API access is through a context manager that creates a 'cards.CardsDB' object:
+
+        # cards_proj/src/cards/cli.py
+        ------------------------------------------
+        import cards
+
+        @contextmanager
+        def cards_db():
+            db_path = get_path()
+            db = cards.CardsDB(db_path)
+            yield db
+            db.close()
+
+
+    - Most of the functions work through that object:
+
+        @app.command()
+        def start(card_id: int):
+            """Set a card state to 'in prog'."""
+            with cards_db() as db:
+                try:
+                    db.start(card_id)
+                except cards.InvalidCardId:
+                    print(f"Error: Invalid card id {card_id}")
+
+
+    - We'll start by testing the 'version' command, the simplest one.  To test the CLI, we'll mock both
+        the '__version__' and 'CardsDB'.
+
+        @app.command()
+        def version():
+            """Return version of cards application"""
+            print(cards.__version__)
+
+
+
+- Testing with Typer
+
+    - A great feature of 'Typer' is that it provides a testing interface.  With it, we can run our
+        application without having to call 'subprocess.run', which is good since we can't mock things
+        in a separate process.
+
+
+    - Here is an example of how we can invoke the 'version' function:
+
+        from typer.testing import CliRunner
+        from cards.cli import app
+
+        runner = CliRunner()
+
+        def test_typer_runner():
+            result = runner.invoke(app, ["version"])
+            print()
+            print(f"version: {result.stdout}")
+            result = runner.invoke(app, ["list", "-o", "brian"])
+            print(f"list:\n{result.stdout}")
+
+
+    - Since we're going to invoke the app plenty of times, we'll create a helper to simplify our tests.
+
+        import shlex
+
+        def cards_cli(command_string):
+            command_list = shlex.split(command_string)
+            result = runner.invoke(app, command_list)
+            output = result.stdout.rstrip()
+            return output
+
+
+
+- Mocking an Attribute
+
+    - Most the the Cards API is accessed through the 'CardsDB' object, but one entry point is just
+        an attribute, 'cards.__version__', which we will mock.
+
+
+    - There are several 'patch' methods in the 'mock' package.  We'll be using 'patch.object'.  We'll
+        use it primarily in it's context manager form.  Here's what it looks like to mock the 
+        '__version__' attribute of the 'cards' namespace:
+
+        # test_mock.py
+        ---------------------------
+        from unittest import mock
+
+        import cards
+        import pytest
+        from cards.cli import app
+        from typer.testing import CliRunner
+
+        runner = CliRunner()
+
+        def test_mock_version():
+            with mock.patch.object(cards, "__version__", "1.2.3"):
+                result = runner.invoke(app, ["version"])
+                assert result.stdout.rstrip() == "1.2.3"
