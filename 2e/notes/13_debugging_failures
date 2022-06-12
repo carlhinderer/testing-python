@@ -1,0 +1,101 @@
+-----------------------------------------------------------------------
+| CHAPTER 13 - DEBUGGING TEST FAILURES                                |
+-----------------------------------------------------------------------
+
+- Installing Packages in Editable Mode
+
+    - If we're developing both code and tests, it is handy to be able to modify the code and 
+        immediately run tests.  To this, we'll install our package in editable mode:
+
+        # Install package in editable mode
+        $ pip install -e ./cards_proj
+
+
+    - In order to also pull in our dependencies, we need to specify them in the package config file
+        and refer to that group when we install the package.
+
+        # pyproject.toml
+        -------------------------
+        test = [
+            "pytest",
+            "faker",
+            "tox",
+            "coverage",
+            "pytest-cov",
+        ]
+
+        # Install package in editable mode, with dependencies
+        $ pip install -e "./cards_proj/[test]"
+
+
+
+- Debugging with pytest Flags
+
+    - There are lots of useful flags for debugging tests:
+
+        -lf / --last-failed: Runs just the tests that failed last
+
+        -ff / --failed-first: Runs all the tests, starting with the last failed
+
+        -x / --exitfirst: Stops the tests session after the first failure
+
+        --maxfail=num: Stops the tests after num failures
+
+        -nf / --new-first: Runs all the tests, ordered by file modification time
+
+        --sw / --stepwise: Stops the tests at the first failure. Starts the tests at the
+                             last failure next time
+
+        --sw-skip / --stepwise-skip: Same as --sw, but skips the first failure
+
+        -v / --verbose: Displays all the test names, passing or failing
+
+        --tb=[auto/long/short/line/native/no]: Controls the traceback style
+
+        -l / --showlocals: Displays local variables alongside the stacktrace
+
+        --pdb: Starts an interactive debugging session at the point of failure
+
+        --trace: Starts the pdb source-code debugger immediately when running each test
+
+        --pdbcls: Uses alternatives to pdb, such as IPython’s debugger with 
+                    --pdb-cls=IPython.terminal.debugger:TerminalPdb
+
+
+
+- Debugging with pdb
+
+    - We can launch pdb from pytest a few different ways:
+
+        1. Add a 'breakpoint()' call in either test code or application code
+
+        2. Use the '--pdb' flag.  With '--pdb', pytest will stop at the point of failure.
+
+        3. Use the --trace flag. With --trace, pytest will stop at the beginning of each test.
+
+
+    - Commonly Used pdb Commands:
+
+        Meta commands:
+          h(elp): Prints a list of commands
+          h(elp) command: Prints help on a command
+          q(uit): Exits pdb
+
+        Seeing where you are:
+          l(ist) : Lists 11 lines around the current line. Using it again lists the next 11 lines, etc.
+          l(ist) .: The same as above, but with a dot. Lists 11 lines around the current line.
+          l(ist) first, last: Lists a specific set of lines
+          ll : Lists all source code for the current function
+          w(here): Prints the stack trace
+
+        Looking at values:
+          p(rint) expr: Evaluates expr and prints the value
+          pp expr: Same as p(rint) expr but uses pretty-print from the pprint module.
+          a(rgs): Prints the argument list of the current function
+
+        Execution commands:
+          s(tep): Executes the current line and steps to the next line in your source code
+          n(ext): Executes the current line and steps to the next line in the current function
+          r(eturn): Continues until the current function returns
+          c(ontinue): Continues until the next breakpoint
+          unt(il) lineno: Continues until the given line number
