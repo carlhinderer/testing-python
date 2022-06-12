@@ -1,0 +1,149 @@
+-----------------------------------------------------------------------
+| CHAPTER 12 - TESTING SCRIPTS & APPLICATIONS                         |
+-----------------------------------------------------------------------
+
+- Testing Scripts and Applications
+
+    - The Cards application we have been testing is an installable package installed with pip.  Once
+        it is installed, the test code can simply 'import cards' to access the application's
+        capabilities.
+
+
+    - Since not all code is installable with pip, we'll look at testing other kinds of apps:
+
+        1. Script = single file containing Python code, meant to be run directly from Python
+
+        2. Importable Script = script in which no code is executed when it is imported, only when it is
+                                 run directly
+
+        3. Application = package or script that has external dependencies defined in a 'requirements.txt'.
+
+
+    - External dependencies for Cards are defined in it's 'pyproject.toml' file and pulled in during the
+        'pip install'.
+
+
+
+- Testing a Simple Python Script
+
+    - Let's start with a very simple script:
+
+        # script/hello_world.py
+        ----------------------------
+        print('Hello, World!')
+
+
+    - We need to run the test and capture the output.  The 'subprocess' module in the Python standard
+        library works fine.
+
+        # test_hello.py
+        ---------------------------
+        from subprocess import run
+        def test_hello():
+            result = run(["python", "hello.py"], capture_output=True, text=True)
+            output = result.stdout
+            assert output == "Hello, World!\n"
+
+
+    - We have to add a setting to tox to allow this kind of subclassing.
+
+        # tox.ini
+        --------------------------
+        [tox]
+        envlist = py39, py310
+        skipsdist = true
+        
+        [testenv]
+        deps = pytest
+        commands = pytest
+        
+        [pytest]
+        ...
+
+
+
+- Testing an Importable Python Script
+
+    - We can change our script a bit to make it importable.
+
+        # script_importable/hello.py
+        -------------------------------
+        def main():
+            print('Hello, world!')
+
+        if __name__ == "__main__":
+            main()
+
+
+    - And, now we can test 'main()' just like any other function.
+
+         # script_importable/test_hello.py
+        -------------------------------
+        import hello
+
+        def test_main(capsys):
+            hello.main()
+            output = capsys.readouterr().out
+            assert output == "Hello, World!\n"
+
+
+
+- Separating Code into src and test Directories
+
+    - Suppose that we want to separate our tests and scripts into separate directories, so we create
+        'src' and 'tests' directories.
+
+        script_src
+          - src
+            - hello.py
+          - tests
+            - test_hello.py
+          - pytest.ini
+
+
+    - By default, this approach will blow up, since the tests don't know to look in the 'src' directory.
+        All 'import' statements, either in source or test code, use the standard Python import process.
+
+      So, we need to add the directories for our source code to the 'sys.path' variable.  Pytest
+        provides the 'pythonpath' option for this.
+
+
+        # pytest.ini
+        ----------------
+        [pytest]
+        addopts = -ra
+        testpaths = tests
+        pythonpath = src
+
+
+
+- Testing requirements.txt-Based Applications
+
+    - A script or application may have dependencies.  A packaged project like 'Cards' has dependencies
+        defined in a setup file.  Projects that don't use packaging put their requirements in a
+        'requirements.txt' file.
+
+
+        # requirements.txt
+        ---------------------
+        typer
+        requests
+
+
+    - It is more common for applications to 'pin' dependencies by defining specific versions that are
+        known to work.
+
+
+        # requirements.txt
+        ---------------------
+        typer==0.3.2
+        requests==2.26.0
+
+
+    - Basically, the process for running the tests is:
+
+        1. git clone ...
+        2. python3 -m venv venv
+        3. venv/bin/activate'
+        4. pip install -r requirements.txt
+        5. python app.py
